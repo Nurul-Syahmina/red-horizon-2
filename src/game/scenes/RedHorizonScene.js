@@ -17,6 +17,11 @@ export class RedHorizonScene extends Phaser.Scene {
     '/assets/audio/music/red-horizon-theme.mp3'
   );
   this.load.image('marsTitle', '/assets/backgrounds/mars-title.png');
+
+  this.load.spritesheet('astroIdle', '/assets/characters/astro/astro-idle.png', {
+    frameWidth: 362,
+    frameHeight: 724
+});
   }
 
   create() {
@@ -26,9 +31,42 @@ export class RedHorizonScene extends Phaser.Scene {
     this.missionIndex = 0;
     this.soundOn = true;
     this.phase = 'menu';
+    // ASTRO idle animation
+this.anims.create({
+    key: 'astro-idle',
+    frames: this.anims.generateFrameNumbers('astroIdle', {
+        start: 0,
+        end: 5
+    }),
+    frameRate: 6,
+    repeat: -1
+});
     this.buildStars();
     this.showMenu();
-    this.scale.on('resize', () => {});
+
+    this.buildStars();
+this.showMenu();
+
+// Display animated ASTRO
+this.astroSprite = this.add.sprite(906, 535, 'astroIdle');
+
+this.astroSprite
+    .setScale(0.40)
+    .setDepth(50)
+    .play('astro-idle');
+
+// Floating animation
+this.tweens.add({
+    targets: this.astroSprite,
+    y: 540,
+    duration: 1200,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.easeInOut'
+});
+
+this.scale.on('resize', () => {});
+
   }
 
   buildStars() {
@@ -115,10 +153,10 @@ export class RedHorizonScene extends Phaser.Scene {
     this.button(330, 470, 205, 62, 'HOW TO PLAY', () => this.showHowTo(), { color: 0x293e68, stroke: 0x80a9dc, fontSize: 18 });
     this.button(80, 548, 112, 35, `${this.soundOn ? '♫ SOUND ON' : '♫ SOUND OFF'}`, () => { this.soundOn = !this.soundOn; this.audio.setMusicEnabled(this.soundOn); this.audio.effectsEnabled = this.soundOn; this.showMenu(); }, { color: 0x263959, stroke: 0x7183a8, fontSize: 13 });
     drawPortrait(this, 740, 512, 'JUNIOR COMMANDER', 1.42);
-    drawPortrait(this, 906, 502, 'ASTRO', 1.36);
-    drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
+    drawPortrait(this, 740, 512, 'JUNIOR COMMANDER', 1.42);
+drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     this.text(740, 586, 'COMMANDER', 14, '#cce1f4', { fontStyle: 'bold' }).setOrigin(0.5);
-    this.text(906, 586, 'ASTRO', 14, '#cce1f4', { fontStyle: 'bold' }).setOrigin(0.5);
+    this.text(906, 650, 'ASTRO', 14, '#cce1f4', { fontStyle: 'bold' }).setOrigin(0.5);
     this.text(1065, 586, 'CAPTAIN NOVA', 14, '#cce1f4', { fontStyle: 'bold' }).setOrigin(0.5);
     this.text(76, 656, 'MISSION CONTROL  •  MARS OUTPOST 01', 12, '#a5b4c8', { letterSpacing: 2 });
     this.tweens.add({ targets: this.children.list.filter(c => c.type === 'Graphics').slice(-3), y: '-=5', duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
