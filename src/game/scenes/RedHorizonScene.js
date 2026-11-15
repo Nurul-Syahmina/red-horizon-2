@@ -16,6 +16,7 @@ export class RedHorizonScene extends Phaser.Scene {
     'backgroundMusic',
     '/assets/audio/music/red-horizon-theme.mp3'
   );
+  this.load.image('marsTitle', '/assets/backgrounds/mars-title.png');
   }
 
   create() {
@@ -61,17 +62,11 @@ export class RedHorizonScene extends Phaser.Scene {
   baseScreen() {
     this.clearStage();
 
-    const g = this.add.graphics().setDepth(-7);
-
-    // Mars landscape
-    g.fillStyle(0x743d52).fillEllipse(270, 740, 840, 350);
-    g.fillStyle(0x9a4d51).fillEllipse(1010, 730, 940, 310);
-    g.fillStyle(0xd26e57).fillEllipse(660, 786, 720, 220);
-
-    // Distant Mars rocks
-    g.fillStyle(0xe69a6a, 0.4).fillCircle(210, 525, 25);
-    g.fillStyle(0xe69a6a, 0.4).fillCircle(1120, 545, 38);
-  }
+    // New illustrated Mars background
+    this.add.image(W / 2, H / 2, 'marsTitle')
+        .setDisplaySize(W, H)
+        .setDepth(-20);
+}
 
 
   text(x, y, value, size = 24, color = '#fff5df', opts = {}) {
