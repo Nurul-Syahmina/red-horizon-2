@@ -656,16 +656,38 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
   }
 
   showFinalReport() {
-    this.baseScreen(); this.phase = 'final';
+    this.baseScreen();
+    this.phase = 'final';
+    this.drawCelebration();
     const values = this.resources.snapshot();
     this.panel(156, 64, 968, 592, 0.96);
-    this.drawCelebration();
     drawPortrait(this, 300, 165, 'ASTRO', 1.0).setDepth(1);
     this.text(370, 102, 'MISSION COMPLETED!', 30, '#9be8b2', { fontStyle: 'bold', letterSpacing: 2 });
     // ASTRO14 final congratulations
     const finalMessage = this.text(370, 150, '', 18, '#fff5df', {wordWrap: { width: 700 }, lineSpacing: 6});
+    
     const voice = this.audio.playVoice('astro14');
-    this.typeText(finalMessage, 'Congratulations, Commander! You have completed all three Mars missions and kept the base operational.', voice?.duration);
+
+    voice?.once('complete', () => {
+        // Fade out confetti after ASTRO finishes speaking
+        this.tweens.add({
+            targets: this.celebrationObjects,
+            alpha: 0,
+            duration: 1500,
+            ease: 'Sine.easeOut',
+
+            onComplete: () => {
+                this.celebrationObjects?.forEach(bit => bit.destroy());
+                this.celebrationObjects = [];
+            }
+        });
+    });
+
+    this.typeText(
+        finalMessage,
+        'Congratulations, Commander! You have completed all three Mars missions and kept the base operational.',
+        voice?.duration
+    );
     this.text(228, 270, 'FINAL RESOURCE REPORT', 14, '#82e6eb', { fontStyle: 'bold', letterSpacing: 2 });
     const resourceRows = Object.entries(RESOURCE_INFO);
     resourceRows.forEach(([key, info], index) => {
@@ -679,19 +701,45 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     this.text(228, 490, 'Thank you for exploring Mars with ASTRO!', 18, '#cbdbe8');
     this.button(818, 585, 144, 48, 'PLAY AGAIN', () => this.showPrologue(), { color: 0x287a81, fontSize: 14 });
     this.button(973, 585, 126, 48, 'MAIN MENU', () => this.showMenu(), { color: 0x293e68, stroke: 0x80a9dc, fontSize: 14 });
-    this.time.delayedCall(1000, () => { if (this.phase === 'final') this.drawCelebration(true); });
   }
 
-  drawCelebration(extra = false) {
-    const g = this.add.graphics().setDepth(30);
-    const count = extra ? 18 : 26;
-    for (let i = 0; i < count; i++) {
-      const c = [0x71e5ef, 0xffc866, 0x92e7a7, 0xff9b67][i % 4];
-      const x = 190 + (i * 79) % 900, y = 72 + (i * 47) % 160;
-      const bit = this.add.rectangle(x, y, 7, 12, c).setDepth(31);
-      bit.setRotation(i * 0.7);
-      this.tweens.add({ targets: bit, y: y + Phaser.Math.Between(18, 55), angle: bit.angle + 135, alpha: 0.15, duration: 800 + i * 27, delay: i * 14, onComplete: () => bit.destroy() });
-    }
-    g.destroy();
+  drawCelebration() {
+      this.celebrationObjects = [];
+
+      const colors = [
+          0x71e5ef,
+          0xffc866,
+          0x92e7a7,
+          0xff9b67
+      ];
+
+      for (let i = 0; i < 35; i++) {
+          const x = Phaser.Math.Between(100, W - 100);
+          const y = Phaser.Math.Between(-H, H);
+
+          const bit = this.add.rectangle(
+              x, y, 7, 12,
+              colors[i % colors.length]
+          ).setDepth(31);
+
+          bit.setRotation(Phaser.Math.FloatBetween(0, 6));
+
+          this.celebrationObjects.push(bit);
+
+          this.tweens.add({
+              targets: bit,
+              y: H + 30,
+              angle: bit.angle + 360,
+              duration: Phaser.Math.Between(3500, 5000),
+              ease: 'Linear',
+              repeat: -1,
+              onRepeat: () => {
+                  bit.setPosition(
+                      Phaser.Math.Between(100, W - 100),
+                      -20
+                  );
+              }
+          });
+      }
   }
 }
