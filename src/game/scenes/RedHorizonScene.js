@@ -75,6 +75,23 @@ this.load.spritesheet(
     }
 );
 
+// ASTRO facial expressions
+const expressions = [
+    'neutral',
+    'happy',
+    'surprised',
+    'playful',
+    'shocked',
+    'worried'
+];
+
+expressions.forEach(expression => {
+    this.load.image(
+        `astro-${expression}`,
+        `/assets/characters/astro/expressions/astro-${expression}.png`
+    );
+});
+
 }
 
   create() {
@@ -85,7 +102,7 @@ this.load.spritesheet(
     this.soundOn = true;
     this.phase = 'menu';
     // ASTRO idle animation
-this.anims.create({
+    this.anims.create({
     key: 'astro-idle',
     frames: this.anims.generateFrameNumbers('astroIdle', {
         start: 0,
@@ -250,6 +267,7 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     this.showStory('prologue', [
       {
         who: 'ASTRO',
+        expression: 'happy',
         text: "Welcome to Mars, Commander! I'm ASTRO, your robot buddy. We have an important mission: keep our Mars base safe and running!",
         voiceKey: 'astro1'
       },
@@ -259,6 +277,7 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
       },
       {
         who: 'ASTRO',
+        expression: 'worried',
         text: 'But remember, our resources are limited. Every decision matters!',
         voiceKey: 'astro2'
       },
@@ -297,9 +316,37 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
       this.audio.playTyping();
     }
     this.dialogueObjects = [];
-    const portrait = drawPortrait(this, 278, 330, line.who, 1.18); portrait.setDepth(12); this.dialogueObjects.push(portrait);
-    const name = this.text(350, 260, line.who, 15, '#81e7ee', { fontStyle: 'bold', letterSpacing: 2 }).setDepth(13); this.dialogueObjects.push(name);
-    const copy = this.text(350, 296, '', 23, '#fff5df', { wordWrap: { width: 675 }, lineSpacing: 9 }).setDepth(13);
+
+    const portrait = drawPortrait(
+        this,
+        280,
+        330,
+        line.who,
+        1.18,
+        line.who === 'ASTRO' ? (line.expression || 'neutral') : 'neutral'
+    );
+
+    portrait.setDepth(12);
+    this.dialogueObjects.push(portrait);
+
+    const name = this.text(
+        390, 260,
+        line.who,
+        15,
+        '#81e7ee',
+        { fontStyle: 'bold', letterSpacing: 2 }
+    ).setDepth(13);
+
+    this.dialogueObjects.push(name);
+
+    const copy = this.text(
+        390, 296,
+        '',
+        23,
+        '#fff5df',
+        { wordWrap: { width: 650 }, lineSpacing: 9 }
+    ).setDepth(13);
+    
     this.dialogueObjects.push(copy);
     const voice = line.voiceKey
       ? this.audio.playVoice(line.voiceKey)
@@ -449,7 +496,7 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     this.missionSceneObjects = [];
 
     // ASTRO stays in the environment, behind dialogue panels
-    const astro = drawPortrait(this, 618, 373, 'ASTRO', 0.92)
+    const astro = drawPortrait(this, 618, 373, 'ASTRO', 0.92, 'neutral')
       .setDepth(-2);
     this.missionSceneObjects.push(astro);
 
@@ -487,8 +534,17 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     this.missionIntroObjects.push(panel);
 
     // ASTRO portrait
-    const portrait = drawPortrait(this, 111, 600, 'ASTRO', 0.55)
-      .setDepth(12);
+    const missionExpressions = [
+        'shocked',    // Solar Storm Alert
+        'worried',    // Power Shortage
+        'surprised'   // Water Leak
+    ];
+
+    const expression = missionExpressions[this.missionIndex] || 'neutral';
+
+    const portrait = drawPortrait(
+        this, 112, 608, 'ASTRO', 0.55, expression
+    ).setDepth(12);
     this.missionIntroObjects.push(portrait);
 
     // Speaker name
@@ -583,7 +639,7 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     this.consequenceObjects.push(panel);
 
     // ASTRO portrait
-    const portrait = drawPortrait(this, 310, 336, 'ASTRO', 1.05);
+    const portrait = drawPortrait(this, 315, 340, 'ASTRO', 1.05, 'worried');
     this.consequenceObjects.push(portrait);
 
     // Decision Log heading
@@ -681,6 +737,7 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     this.showStory('finalStory', [
       {
         who: 'ASTRO',
+        expression: 'happy',
         text: "Commander, we did it! All three missions are complete! You've helped protect our astronauts, manage our electricity and save our greenhouse!",
         voiceKey: 'astro12'
       },
@@ -690,6 +747,7 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
       },
       {
         who: 'ASTRO',
+        expression: 'playful',
         text: 'Absolutely! Remember, every resource is important, and every decision has consequences. Great work, Commander!',
         voiceKey: 'astro13'
       },
@@ -706,8 +764,12 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
 
     const values = this.resources.snapshot();
     this.panel(156, 64, 968, 592, 0.96);
-    drawPortrait(this, 300, 165, 'ASTRO', 1.0).setDepth(1);
-    this.text(370, 102, 'MISSION COMPLETED!', 30, '#9be8b2', { fontStyle: 'bold', letterSpacing: 2 });
+    drawPortrait(this, 275, 165, 'ASTRO', 0.85, 'happy').setDepth(1);
+
+    this.text(370, 102, 'MISSION COMPLETED!', 30, '#9be8b2', {
+        fontStyle: 'bold',
+        letterSpacing: 2
+    });
     // ASTRO14 final congratulations
     const finalMessage = this.text(370, 150, '', 18, '#fff5df', {wordWrap: { width: 700 }, lineSpacing: 6});
     
