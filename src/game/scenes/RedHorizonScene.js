@@ -456,8 +456,8 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     }).setDepth(12);
     this.missionIntroObjects.push(copy);
 
-    this.typeText(copy, mission.intro);
-    this.audio.playVoice(mission.voiceIntro);
+    const voice = this.audio.playVoice(mission.voiceIntro);
+    this.typeText(copy, mission.intro, voice?.duration);
 
     // Continue button
     const button = this.button(1030, 601, 166, 48, 'CONTINUE  →', () => {
@@ -544,12 +544,14 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
 
     // Outcome explanation
     const outcome = this.text(
-      385, 265, choice.outcome, 20, '#fff5df',
+      385, 265, '', 20, '#fff5df',
       { wordWrap: { width: 625 }, lineSpacing: 7 }
     );
     this.consequenceObjects.push(outcome);
 
-    this.audio.playVoice(choice.voiceKey);
+    // Play voice-over and synchronise the typewriter effect
+    const voice = this.audio.playVoice(choice.voiceKey);
+    this.typeText(outcome, choice.outcome, voice?.duration);
 
     const info = RESOURCE_INFO[choice.resource];
 
@@ -622,6 +624,30 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
   }
 
   showFinal() {
+    this.showStory('finalStory', [
+      {
+        who: 'ASTRO',
+        text: "Commander, we did it! All three missions are complete! You've helped protect our astronauts, manage our electricity and save our greenhouse!",
+        voiceKey: 'astro12'
+      },
+      {
+        who: 'JUNIOR COMMANDER',
+        text: 'We make a great team, ASTRO!'
+      },
+      {
+        who: 'ASTRO',
+        text: 'Absolutely! Remember, every resource is important, and every decision has consequences. Great work, Commander!',
+        voiceKey: 'astro13'
+      },
+      {
+        who: 'ASTRO',
+        text: 'Congratulations, Commander! You have completed all three Mars missions and kept the base operational.',
+        voiceKey: 'astro14'
+      }
+    ], () => this.showFinalReport(), 'MISSION COMPLETED!');
+  }
+
+  showFinalReport() {
     this.baseScreen(); this.phase = 'final';
     const values = this.resources.snapshot();
     this.panel(156, 64, 968, 592, 0.96);
