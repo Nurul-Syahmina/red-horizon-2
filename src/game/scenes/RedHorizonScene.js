@@ -13,6 +13,17 @@ export class RedHorizonScene extends Phaser.Scene {
 
 
 preload() {
+  
+// Commander walking animation
+this.load.spritesheet(
+    'commanderWalk',
+    '/assets/characters/commander/commander-walk.png',
+    {
+        frameWidth: 443,
+        frameHeight: 443
+    }
+);
+
   // Background music
   this.load.audio(
     'backgroundMusic',
@@ -32,12 +43,6 @@ preload() {
       `/assets/audio/voice-over/astro/ASTRO${i}.mp3`
     );
   }
-
-  // JUNIOR COMMANDER typing sound
-  this.load.audio(
-    'commanderTyping',
-    '/assets/audio/voice-over/junior-commander/COMMANDER.mp3'
-  );
 
   // ASTRO idle animation spritesheet
 this.load.spritesheet(
@@ -79,6 +84,17 @@ this.anims.create({
     repeat: -1
 });
 
+// Commander walking animation
+this.anims.create({
+    key: 'commander-walk',
+    frames: this.anims.generateFrameNumbers('commanderWalk', {
+        start: 0,
+        end: 7
+    }),
+    frameRate: 8,
+    repeat: -1
+});
+
 // ASTRO walking animation
 this.anims.create({
     key: 'astro-walk',
@@ -90,27 +106,22 @@ this.anims.create({
     repeat: -1
 });
 
+// Commander walking animation
+this.anims.create({
+    key: 'commander-walk',
+    frames: this.anims.generateFrameNumbers('commanderWalk', {
+        start: 0,
+        end: 7
+    }),
+    frameRate: 8,
+    repeat: -1
+});
+
     this.buildStars();
     this.showMenu();
 
 
-// Display animated ASTRO
-this.astroSprite = this.add.sprite(906, 535, 'astroWalk');
 
-this.astroSprite
-    .setScale(0.40)
-    .setDepth(50)
-   .play('astro-walk');
-
-// Floating animation
-this.tweens.add({
-    targets: this.astroSprite,
-    y: 540,
-    duration: 1200,
-    yoyo: true,
-    repeat: -1,
-    ease: 'Sine.easeInOut'
-});
 
 this.scale.on('resize', () => {});
 
@@ -132,7 +143,6 @@ this.scale.on('resize', () => {});
 
   clearStage() {
     this.audio?.stopVoice();
-    this.audio?.stopTyping();
     this.tweens.killAll();
     this.dialogueTimer?.remove(false);
     if (this.resourceDisplay) { this.resourceDisplay.destroy(); this.resourceDisplay = null; }
@@ -189,7 +199,31 @@ this.scale.on('resize', () => {});
   }
 
   showMenu() {
-    this.baseScreen(); this.phase = 'menu';
+    this.baseScreen();
+    // Display the NEW animated ASTRO character
+if (this.astroSprite) {
+    this.astroSprite.destroy();
+}
+
+
+this.astroSprite = this.add.sprite(906, 535, 'astroWalk');
+
+this.astroSprite
+    .setScale(0.55)
+    .setDepth(50)
+    .play('astro-walk');
+
+
+// Floating animation
+this.tweens.add({
+    targets: this.astroSprite,
+    y: 540,
+    duration: 1200,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.InOut'
+});
+    this.phase = 'menu';
     this.text(72, 66, 'RED', 70, '#fff3dc', { fontStyle: 'bold', letterSpacing: 4 }).setShadow(0, 5, '#361e37', 10, true, true);
     this.text(72, 131, 'HORIZON', 70, '#ff9b67', { fontStyle: 'bold', letterSpacing: 4 }).setShadow(0, 5, '#361e37', 10, true, true);
     this.text(78, 220, 'JUNIOR ASTRONAUT MISSION TRAINER', 18, '#9ce9f0', { fontStyle: 'bold', letterSpacing: 2 });
@@ -200,14 +234,19 @@ this.scale.on('resize', () => {});
     this.button(84, 470, 230, 62, 'START MISSION  →', () => this.showPrologue(), { color: 0x287a81, fontSize: 20 });
     this.button(330, 470, 205, 62, 'HOW TO PLAY', () => this.showHowTo(), { color: 0x293e68, stroke: 0x80a9dc, fontSize: 18 });
     this.button(80, 548, 112, 35, `${this.soundOn ? '♫ SOUND ON' : '♫ SOUND OFF'}`, () => { this.soundOn = !this.soundOn; this.audio.setMusicEnabled(this.soundOn); this.audio.effectsEnabled = this.soundOn; this.showMenu(); }, { color: 0x263959, stroke: 0x7183a8, fontSize: 13 });
-    drawPortrait(this, 740, 512, 'JUNIOR COMMANDER', 1.42);
-    drawPortrait(this, 740, 512, 'JUNIOR COMMANDER', 1.42);
-drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
-    this.text(740, 586, 'COMMANDER', 14, '#cce1f4', { fontStyle: 'bold' }).setOrigin(0.5);
+   // New animated Commander
+this.commanderSprite = this.add.sprite(
+    740, 512, 'commanderWalk'
+);
+
+this.commanderSprite
+    .setScale(0.55)
+    .setDepth(50)
+    .play('commander-walk');
+    this.text(740, 645, 'COMMANDER', 14, '#cce1f4', { fontStyle: 'bold' }).setOrigin(0.5);
     this.text(906, 650, 'ASTRO', 14, '#cce1f4', { fontStyle: 'bold' }).setOrigin(0.5);
-    this.text(1065, 586, 'CAPTAIN NOVA', 14, '#cce1f4', { fontStyle: 'bold' }).setOrigin(0.5);
     this.text(76, 656, 'MISSION CONTROL  •  MARS OUTPOST 01', 12, '#a5b4c8', { letterSpacing: 2 });
-    this.tweens.add({ targets: this.children.list.filter(c => c.type === 'Graphics').slice(-3), y: '-=5', duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    
   }
 
   showHowTo() {
@@ -276,10 +315,6 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     if (this.storyIndex >= this.storyLines.length) return this.storyComplete();
     const line = this.storyLines[this.storyIndex];
     this.clearDialogueArea();
-    // Play typing sound only for JUNIOR COMMANDER
-    if (line.who === 'JUNIOR COMMANDER') {
-      this.audio.playTyping();
-    }
     this.dialogueObjects = [];
     const portrait = drawPortrait(this, 278, 330, line.who, 1.18); portrait.setDepth(12); this.dialogueObjects.push(portrait);
     const name = this.text(350, 260, line.who, 15, '#81e7ee', { fontStyle: 'bold', letterSpacing: 2 }).setDepth(13); this.dialogueObjects.push(name);
@@ -299,7 +334,6 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
   }
 
   clearDialogueArea() {
-    this.audio?.stopTyping();
     this.dialogueTimer?.remove(false); this.typingDone = true;
     this.dialogueObjects?.forEach(o => o.destroy()); this.dialogueObjects = [];
     // Portrait and text added in each line are tagged for clean removal.
@@ -330,9 +364,9 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
         this.typeTarget.setText(
           this.typeFull.slice(0, this.typeIndex)
         );
+
         if (this.typeIndex >= this.typeFull.length) {
           this.typingDone = true;
-          this.audio.stopTyping();
         }
       }
     });
@@ -342,7 +376,6 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     if (!this.typingDone && this.typeTarget?.active) {
       this.dialogueTimer?.remove(false); this.typeTarget.setText(this.typeFull); this.typingDone = true;
       this.audio.stopVoice();
-      this.audio.stopTyping();
     }
   }
 
@@ -676,38 +709,16 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
   }
 
   showFinalReport() {
-    this.baseScreen();
-    this.phase = 'final';
-    this.drawCelebration();
+    this.baseScreen(); this.phase = 'final';
     const values = this.resources.snapshot();
     this.panel(156, 64, 968, 592, 0.96);
+    this.drawCelebration();
     drawPortrait(this, 300, 165, 'ASTRO', 1.0).setDepth(1);
     this.text(370, 102, 'MISSION COMPLETED!', 30, '#9be8b2', { fontStyle: 'bold', letterSpacing: 2 });
     // ASTRO14 final congratulations
     const finalMessage = this.text(370, 150, '', 18, '#fff5df', {wordWrap: { width: 700 }, lineSpacing: 6});
-    
     const voice = this.audio.playVoice('astro14');
-
-    voice?.once('complete', () => {
-        // Fade out confetti after ASTRO finishes speaking
-        this.tweens.add({
-            targets: this.celebrationObjects,
-            alpha: 0,
-            duration: 1500,
-            ease: 'Sine.easeOut',
-
-            onComplete: () => {
-                this.celebrationObjects?.forEach(bit => bit.destroy());
-                this.celebrationObjects = [];
-            }
-        });
-    });
-
-    this.typeText(
-        finalMessage,
-        'Congratulations, Commander! You have completed all three Mars missions and kept the base operational.',
-        voice?.duration
-    );
+    this.typeText(finalMessage, 'Congratulations, Commander! You have completed all three Mars missions and kept the base operational.', voice?.duration);
     this.text(228, 270, 'FINAL RESOURCE REPORT', 14, '#82e6eb', { fontStyle: 'bold', letterSpacing: 2 });
     const resourceRows = Object.entries(RESOURCE_INFO);
     resourceRows.forEach(([key, info], index) => {
@@ -721,45 +732,19 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     this.text(228, 490, 'Thank you for exploring Mars with ASTRO!', 18, '#cbdbe8');
     this.button(818, 585, 144, 48, 'PLAY AGAIN', () => this.showPrologue(), { color: 0x287a81, fontSize: 14 });
     this.button(973, 585, 126, 48, 'MAIN MENU', () => this.showMenu(), { color: 0x293e68, stroke: 0x80a9dc, fontSize: 14 });
+    this.time.delayedCall(1000, () => { if (this.phase === 'final') this.drawCelebration(true); });
   }
 
-  drawCelebration() {
-      this.celebrationObjects = [];
-
-      const colors = [
-          0x71e5ef,
-          0xffc866,
-          0x92e7a7,
-          0xff9b67
-      ];
-
-      for (let i = 0; i < 35; i++) {
-          const x = Phaser.Math.Between(100, W - 100);
-          const y = Phaser.Math.Between(-H, H);
-
-          const bit = this.add.rectangle(
-              x, y, 7, 12,
-              colors[i % colors.length]
-          ).setDepth(31);
-
-          bit.setRotation(Phaser.Math.FloatBetween(0, 6));
-
-          this.celebrationObjects.push(bit);
-
-          this.tweens.add({
-              targets: bit,
-              y: H + 30,
-              angle: bit.angle + 360,
-              duration: Phaser.Math.Between(3500, 5000),
-              ease: 'Linear',
-              repeat: -1,
-              onRepeat: () => {
-                  bit.setPosition(
-                      Phaser.Math.Between(100, W - 100),
-                      -20
-                  );
-              }
-          });
-      }
+  drawCelebration(extra = false) {
+    const g = this.add.graphics().setDepth(30);
+    const count = extra ? 18 : 26;
+    for (let i = 0; i < count; i++) {
+      const c = [0x71e5ef, 0xffc866, 0x92e7a7, 0xff9b67][i % 4];
+      const x = 190 + (i * 79) % 900, y = 72 + (i * 47) % 160;
+      const bit = this.add.rectangle(x, y, 7, 12, c).setDepth(31);
+      bit.setRotation(i * 0.7);
+      this.tweens.add({ targets: bit, y: y + Phaser.Math.Between(18, 55), angle: bit.angle + 135, alpha: 0.15, duration: 800 + i * 27, delay: i * 14, onComplete: () => bit.destroy() });
+    }
+    g.destroy();
   }
 }
