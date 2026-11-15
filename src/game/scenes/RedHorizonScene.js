@@ -13,6 +13,11 @@ export class RedHorizonScene extends Phaser.Scene {
 
 
 preload() {
+
+  this.load.image(
+    'solarStormBg',
+    '/assets/backgrounds/solar-storm-bg.png'
+);
   
 // Commander walking animation
 this.load.spritesheet(
@@ -424,25 +429,54 @@ this.commanderSprite
 
   drawMissionHeader(mission) {
     this.text(42, 28, `${mission.icon}  ${mission.title.toUpperCase()}`, 25, '#fff5df', { fontStyle: 'bold', letterSpacing: 1 });
-    this.text(43, 66, `MISSION ${this.missionIndex + 1} OF 3`, 13, '#9fe8ed', { fontStyle: 'bold', letterSpacing: 2 });
-    for (let i = 0; i < 3; i++) {
-      this.add.circle(189 + i * 22, 74, 4, i <= this.missionIndex ? 0x79e2e6 : 0x667792).setDepth(8);
+    // Dark panel behind mission progress
+this.add.graphics()
+    .fillStyle(0x101b38, 0.88)
+    .fillRoundedRect(30, 55, 310, 48, 14)
+    .setDepth(7);
+
+// Mission progress text
+this.text(
+    45, 68,
+    `MISSION ${this.missionIndex + 1} OF 3`,
+    17,
+    '#ffffff',
+    {
+        fontStyle: 'bold',
+        letterSpacing: 2
     }
-  }
+).setDepth(8);
+
+// Three progress dots
+for (let i = 0; i < 3; i++) {
+    const active = i <= this.missionIndex;
+
+    if (active) {
+        this.add.circle(255 + i * 24, 80, 7, 0x43e9ed)
+            .setDepth(8);
+
+        this.add.circle(255 + i * 24, 80, 11, 0x43e9ed, 0.2)
+            .setDepth(7);
+    } else {
+        this.add.circle(255 + i * 24, 80, 6, 0x8294b5)
+            .setDepth(8);
+    }
+}
+    }
+
 
   drawMissionBackdrop(mission) {
     const g = this.add.graphics().setDepth(-6);
     if (mission.scene === 'storm') {
+
+this.add.image(640, 360, 'solarStormBg')
+    .setDisplaySize(1280, 720)
+    .setDepth(-10);
+
       g.lineStyle(3, 0xffc375, 0.8);
       for (let i = 0; i < 7; i++) g.beginPath().moveTo(810 + i * 45, 0).lineTo(670 + i * 37, 155).strokePath();
       const glow = this.add.ellipse(1032, 176, 470, 225, 0xff8e65, 0.11).setDepth(-5);
       this.tweens.add({ targets: glow, alpha: 0.28, duration: 1000, yoyo: true, repeat: -1 });
-      g.fillStyle(0x26395b).fillRoundedRect(820, 373, 132, 98, 20);
-      g.fillStyle(0x36577d).fillRoundedRect(840, 338, 92, 56, 28);
-      g.lineStyle(3, 0x70d9e6).strokeRoundedRect(819, 372, 134, 100, 20);
-      g.fillStyle(0x72dce7, 0.18).fillRoundedRect(850, 402, 74, 40, 12);
-      g.fillStyle(0xffd17c).fillRoundedRect(770, 460, 30, 48, 8); g.fillStyle(0xffdf8b).fillRoundedRect(967, 459, 29, 48, 8);
-      this.text(829, 509, 'RADIATION SHELTER', 12, '#cce7f6', { fontStyle: 'bold' });
       this.drawAlert('SOLAR STORM', 1015, 277, 0xffa866);
     } else if (mission.scene === 'power') {
       for (let i = 0; i < 3; i++) {
@@ -489,10 +523,6 @@ this.commanderSprite
   drawMissionSceneArt(mission) {
     this.missionSceneObjects = [];
 
-    // ASTRO stays in the environment, behind dialogue panels
-    const astro = drawPortrait(this, 618, 373, 'ASTRO', 0.92)
-      .setDepth(-2);
-    this.missionSceneObjects.push(astro);
 
     // Radio behind panels
     const radio = this.add.graphics().setDepth(-2);
@@ -500,13 +530,6 @@ this.commanderSprite
     radio.fillStyle(0x78dfe8).fillRoundedRect(603, 421, 31, 4, 2);
     this.missionSceneObjects.push(radio);
 
-    // ASTRO label behind panels
-    const name = this.text(
-      580, 455, 'ASTRO', 12, '#cff0f2',
-      { fontStyle: 'bold', letterSpacing: 1 }
-    ).setDepth(-2);
-
-    this.missionSceneObjects.push(name);
 
     this.tweens.add({
       targets: radio,
@@ -743,7 +766,7 @@ this.commanderSprite
 
     // Play mission completed sound
     this.audio.playEffect('missionCompleted');
-    
+
     const values = this.resources.snapshot();
     this.panel(156, 64, 968, 592, 0.96);
     this.drawCelebration();
