@@ -6,6 +6,7 @@ export class AudioManager {
     this.effectsEnabled = true;
     this.voiceEnabled = true;
     this.currentVoice = null;
+    this.currentTyping = null;
     this.music = null;
   }
 
@@ -32,6 +33,36 @@ export class AudioManager {
     voice.play();
 
     return voice;
+  }
+
+  /** Play COMMANDER typing sound while dialogue is being typed. */
+  playTyping(key = 'commanderTyping') {
+    this.stopTyping();
+
+    if (
+      !this.effectsEnabled ||
+      !this.scene.cache.audio.exists(key)
+    ) {
+      return null;
+    }
+
+    this.currentTyping = this.scene.sound.add(key, {
+      loop: true,
+      volume: 0.5
+    });
+
+    this.currentTyping.play();
+
+    return this.currentTyping;
+  }
+
+  /** Stop COMMANDER typing sound. */
+  stopTyping() {
+    if (this.currentTyping) {
+      this.currentTyping.stop();
+      this.currentTyping.destroy();
+      this.currentTyping = null;
+    }
   }
 
   /** Register supplied recordings with Phaser's loader. Empty paths are ignored. */
