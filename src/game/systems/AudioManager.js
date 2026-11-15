@@ -11,10 +11,27 @@ export class AudioManager {
 
   playVoice(key) {
     this.stopVoice();
-    if (!this.voiceEnabled || !key || !this.scene.cache.audio.exists(key)) return;
-    this.currentVoice = this.scene.sound.add(key);
-    this.currentVoice.once('complete', () => { this.currentVoice = null; });
-    this.currentVoice.play();
+
+    if (
+      !this.voiceEnabled ||
+      !key ||
+      !this.scene.cache.audio.exists(key)
+    ) {
+      return null;
+    }
+
+    const voice = this.scene.sound.add(key);
+    this.currentVoice = voice;
+
+    voice.once('complete', () => {
+      if (this.currentVoice === voice) {
+        this.currentVoice = null;
+      }
+    });
+
+    voice.play();
+
+    return voice;
   }
 
   /** Register supplied recordings with Phaser's loader. Empty paths are ignored. */

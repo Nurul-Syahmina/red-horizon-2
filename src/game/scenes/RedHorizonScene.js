@@ -12,11 +12,22 @@ export class RedHorizonScene extends Phaser.Scene {
   constructor() { super('RedHorizon'); }
 
   preload() {
-  this.load.audio(
-    'backgroundMusic',
-    '/assets/audio/music/red-horizon-theme.mp3'
-  );
-  this.load.image('marsTitle', '/assets/backgrounds/mars-title.png');
+    // Background music
+    this.load.audio(
+      'backgroundMusic',
+      '/assets/audio/music/red-horizon-theme.mp3'
+    );
+
+    // Background image
+    this.load.image('marsTitle', '/assets/backgrounds/mars-title.png');
+
+    // ASTRO voice-over recordings (ASTRO1–ASTRO14)
+    for (let i = 1; i <= 14; i++) {
+      this.load.audio(
+        `astro${i}`,
+        `/assets/audio/voice-over/astro/ASTRO${i}.mp3`
+      );
+    }
   }
 
   create() {
@@ -146,10 +157,20 @@ export class RedHorizonScene extends Phaser.Scene {
     this.missionIndex = 0;
     this.selectedMission = undefined;
     this.showStory('prologue', [
-      { who: 'CAPTAIN NOVA', text: 'Welcome to Mars! Complete all three missions to keep your base running.', voiceKey: 'captain-prologue' },
-      { who: 'ASTRO', text: 'Welcome to Mars, Commander! I\'m ASTRO, your robot buddy. We have an important mission: keep our Mars base safe and running!', voiceKey: 'astro-prologue-welcome' },
-      { who: 'JUNIOR COMMANDER', text: 'Let\'s do this!', voiceKey: 'commander-prologue-response' },
-      { who: 'ASTRO', text: 'But remember, our resources are limited. Every decision matters!', voiceKey: 'astro-prologue-resources' },
+      {
+        who: 'ASTRO',
+        text: "Welcome to Mars, Commander! I'm ASTRO, your robot buddy. We have an important mission: keep our Mars base safe and running!",
+        voiceKey: 'astro1'
+      },
+      {
+        who: 'JUNIOR COMMANDER',
+        text: "Let's do this!"
+      },
+      {
+        who: 'ASTRO',
+        text: 'But remember, our resources are limited. Every decision matters!',
+        voiceKey: 'astro2'
+      },
     ], () => this.startMission(0), 'WELCOME TO MARS!');
   }
 
@@ -185,8 +206,10 @@ export class RedHorizonScene extends Phaser.Scene {
     const name = this.text(350, 260, line.who, 15, '#81e7ee', { fontStyle: 'bold', letterSpacing: 2 }).setDepth(13); this.dialogueObjects.push(name);
     const copy = this.text(350, 296, '', 23, '#fff5df', { wordWrap: { width: 675 }, lineSpacing: 9 }).setDepth(13);
     this.dialogueObjects.push(copy);
-    this.typeText(copy, line.text);
-    this.audio.playVoice(line.voiceKey);
+    const voice = line.voiceKey
+      ? this.audio.playVoice(line.voiceKey)
+      : null;
+    this.typeText(copy, line.text, voice?.duration);
     const button = this.button(856, 520, 192, 52, this.storyIndex === this.storyLines.length - 1 ? 'LET’S GO  →' : 'CONTINUE  →', () => {
       if (!this.typingDone) { this.revealTyping(); return; }
       this.storyIndex++; this.renderStoryLine();
@@ -203,13 +226,36 @@ export class RedHorizonScene extends Phaser.Scene {
     this.children.list.slice().filter(c => c.getData?.('dialogue')).forEach(c => c.destroy());
   }
 
-  typeText(target, fullText) {
-    this.typingDone = false; this.typeIndex = 0; this.typeTarget = target; this.typeFull = fullText;
-    this.dialogueTimer = this.time.addEvent({ delay: 20, repeat: fullText.length, callback: () => {
-      if (!this.typeTarget?.active) return;
-      this.typeIndex++; this.typeTarget.setText(this.typeFull.slice(0, this.typeIndex));
-      if (this.typeIndex >= this.typeFull.length) this.typingDone = true;
-    } });
+  typeText(target, fullText, audioDuration = null) {
+    this.typingDone = false;
+    this.typeIndex = 0;
+    this.typeTarget = target;
+    this.typeFull = fullText;
+
+    const delay = audioDuration > 0
+      ? Phaser.Math.Clamp(
+          (audioDuration * 1000) / Math.max(fullText.length, 1),
+          12,
+          60
+        )
+      : 20;
+
+    this.dialogueTimer = this.time.addEvent({
+      delay,
+      repeat: fullText.length,
+      callback: () => {
+        if (!this.typeTarget?.active) return;
+
+        this.typeIndex++;
+        this.typeTarget.setText(
+          this.typeFull.slice(0, this.typeIndex)
+        );
+
+        if (this.typeIndex >= this.typeFull.length) {
+          this.typingDone = true;
+        }
+      }
+    });
   }
 
   revealTyping() {
