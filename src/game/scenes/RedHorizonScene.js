@@ -34,16 +34,26 @@ preload() {
   }
 
   // ASTRO idle animation spritesheet
-  this.load.spritesheet(
+this.load.spritesheet(
     'astroIdle',
     '/assets/characters/astro/astro-idle.png',
     {
-      frameWidth: 362,
-      frameHeight: 724
+        frameWidth: 362,
+        frameHeight: 724
     }
-  );
-}
+);
 
+// ASTRO walking animation spritesheet
+this.load.spritesheet(
+    'astroWalk',
+    '/assets/characters/astro/astro-walk-clean.png',
+    {
+        frameWidth: 443,
+        frameHeight: 443
+    }
+);
+
+}
 
   create() {
     this.resources = new ResourceManager();
@@ -62,19 +72,29 @@ this.anims.create({
     frameRate: 6,
     repeat: -1
 });
+
+// ASTRO walking animation
+this.anims.create({
+    key: 'astro-walk',
+    frames: this.anims.generateFrameNumbers('astroWalk', {
+        start: 0,
+        end: 7
+    }),
+    frameRate: 10,
+    repeat: -1
+});
+
     this.buildStars();
     this.showMenu();
 
-    this.buildStars();
-this.showMenu();
 
 // Display animated ASTRO
-this.astroSprite = this.add.sprite(906, 535, 'astroIdle');
+this.astroSprite = this.add.sprite(906, 535, 'astroWalk');
 
 this.astroSprite
     .setScale(0.40)
     .setDepth(50)
-    .play('astro-idle');
+   .play('astro-walk');
 
 // Floating animation
 this.tweens.add({
