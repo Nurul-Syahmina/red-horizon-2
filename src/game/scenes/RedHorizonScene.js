@@ -11,18 +11,39 @@ const FONT = 'Trebuchet MS, Arial, sans-serif';
 export class RedHorizonScene extends Phaser.Scene {
   constructor() { super('RedHorizon'); }
 
-  preload() {
+
+preload() {
+  // Background music
   this.load.audio(
     'backgroundMusic',
     '/assets/audio/music/red-horizon-theme.mp3'
   );
-  this.load.image('marsTitle', '/assets/backgrounds/mars-title.png');
 
-  this.load.spritesheet('astroIdle', '/assets/characters/astro/astro-idle.png', {
-    frameWidth: 362,
-    frameHeight: 724
-});
+  // Background image
+  this.load.image(
+    'marsTitle',
+    '/assets/backgrounds/mars-title.png'
+  );
+
+  // ASTRO voice-over recordings (ASTRO1–ASTRO14)
+  for (let i = 1; i <= 14; i++) {
+    this.load.audio(
+      `astro${i}`,
+      `/assets/audio/voice-over/astro/ASTRO${i}.mp3`
+    );
   }
+
+  // ASTRO idle animation spritesheet
+  this.load.spritesheet(
+    'astroIdle',
+    '/assets/characters/astro/astro-idle.png',
+    {
+      frameWidth: 362,
+      frameHeight: 724
+    }
+  );
+}
+
 
   create() {
     this.resources = new ResourceManager();
@@ -184,10 +205,20 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     this.missionIndex = 0;
     this.selectedMission = undefined;
     this.showStory('prologue', [
-      { who: 'CAPTAIN NOVA', text: 'Welcome to Mars! Complete all three missions to keep your base running.', voiceKey: 'captain-prologue' },
-      { who: 'ASTRO', text: 'Welcome to Mars, Commander! I\'m ASTRO, your robot buddy. We have an important mission: keep our Mars base safe and running!', voiceKey: 'astro-prologue-welcome' },
-      { who: 'JUNIOR COMMANDER', text: 'Let\'s do this!', voiceKey: 'commander-prologue-response' },
-      { who: 'ASTRO', text: 'But remember, our resources are limited. Every decision matters!', voiceKey: 'astro-prologue-resources' },
+      {
+        who: 'ASTRO',
+        text: "Welcome to Mars, Commander! I'm ASTRO, your robot buddy. We have an important mission: keep our Mars base safe and running!",
+        voiceKey: 'astro1'
+      },
+      {
+        who: 'JUNIOR COMMANDER',
+        text: "Let's do this!"
+      },
+      {
+        who: 'ASTRO',
+        text: 'But remember, our resources are limited. Every decision matters!',
+        voiceKey: 'astro2'
+      },
     ], () => this.startMission(0), 'WELCOME TO MARS!');
   }
 
@@ -223,8 +254,10 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     const name = this.text(350, 260, line.who, 15, '#81e7ee', { fontStyle: 'bold', letterSpacing: 2 }).setDepth(13); this.dialogueObjects.push(name);
     const copy = this.text(350, 296, '', 23, '#fff5df', { wordWrap: { width: 675 }, lineSpacing: 9 }).setDepth(13);
     this.dialogueObjects.push(copy);
-    this.typeText(copy, line.text);
-    this.audio.playVoice(line.voiceKey);
+    const voice = line.voiceKey
+      ? this.audio.playVoice(line.voiceKey)
+      : null;
+    this.typeText(copy, line.text, voice?.duration);
     const button = this.button(856, 520, 192, 52, this.storyIndex === this.storyLines.length - 1 ? 'LET’S GO  →' : 'CONTINUE  →', () => {
       if (!this.typingDone) { this.revealTyping(); return; }
       this.storyIndex++; this.renderStoryLine();
@@ -241,13 +274,36 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     this.children.list.slice().filter(c => c.getData?.('dialogue')).forEach(c => c.destroy());
   }
 
-  typeText(target, fullText) {
-    this.typingDone = false; this.typeIndex = 0; this.typeTarget = target; this.typeFull = fullText;
-    this.dialogueTimer = this.time.addEvent({ delay: 20, repeat: fullText.length, callback: () => {
-      if (!this.typeTarget?.active) return;
-      this.typeIndex++; this.typeTarget.setText(this.typeFull.slice(0, this.typeIndex));
-      if (this.typeIndex >= this.typeFull.length) this.typingDone = true;
-    } });
+  typeText(target, fullText, audioDuration = null) {
+    this.typingDone = false;
+    this.typeIndex = 0;
+    this.typeTarget = target;
+    this.typeFull = fullText;
+
+    const delay = audioDuration > 0
+      ? Phaser.Math.Clamp(
+          (audioDuration * 1000) / Math.max(fullText.length, 1),
+          12,
+          60
+        )
+      : 20;
+
+    this.dialogueTimer = this.time.addEvent({
+      delay,
+      repeat: fullText.length,
+      callback: () => {
+        if (!this.typeTarget?.active) return;
+
+        this.typeIndex++;
+        this.typeTarget.setText(
+          this.typeFull.slice(0, this.typeIndex)
+        );
+
+        if (this.typeIndex >= this.typeFull.length) {
+          this.typingDone = true;
+        }
+      }
+    });
   }
 
   revealTyping() {
@@ -400,8 +456,8 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     }).setDepth(12);
     this.missionIntroObjects.push(copy);
 
-    this.typeText(copy, mission.intro);
-    this.audio.playVoice(mission.voiceIntro);
+    const voice = this.audio.playVoice(mission.voiceIntro);
+    this.typeText(copy, mission.intro, voice?.duration);
 
     // Continue button
     const button = this.button(1030, 601, 166, 48, 'CONTINUE  →', () => {
@@ -488,12 +544,14 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
 
     // Outcome explanation
     const outcome = this.text(
-      385, 265, choice.outcome, 20, '#fff5df',
+      385, 265, '', 20, '#fff5df',
       { wordWrap: { width: 625 }, lineSpacing: 7 }
     );
     this.consequenceObjects.push(outcome);
 
-    this.audio.playVoice(choice.voiceKey);
+    // Play voice-over and synchronise the typewriter effect
+    const voice = this.audio.playVoice(choice.voiceKey);
+    this.typeText(outcome, choice.outcome, voice?.duration);
 
     const info = RESOURCE_INFO[choice.resource];
 
@@ -566,28 +624,46 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
   }
 
   showFinal() {
+    this.showStory('finalStory', [
+      {
+        who: 'ASTRO',
+        text: "Commander, we did it! All three missions are complete! You've helped protect our astronauts, manage our electricity and save our greenhouse!",
+        voiceKey: 'astro12'
+      },
+      {
+        who: 'JUNIOR COMMANDER',
+        text: 'We make a great team, ASTRO!'
+      },
+      {
+        who: 'ASTRO',
+        text: 'Absolutely! Remember, every resource is important, and every decision has consequences. Great work, Commander!',
+        voiceKey: 'astro13'
+      },
+    ], () => this.showFinalReport(), 'MISSION COMPLETED!');
+  }
+
+  showFinalReport() {
     this.baseScreen(); this.phase = 'final';
     const values = this.resources.snapshot();
     this.panel(156, 64, 968, 592, 0.96);
     this.drawCelebration();
     drawPortrait(this, 300, 165, 'ASTRO', 1.0).setDepth(1);
     this.text(370, 102, 'MISSION COMPLETED!', 30, '#9be8b2', { fontStyle: 'bold', letterSpacing: 2 });
-    this.text(370, 150, 'Commander, we did it! All three missions are complete! You’ve helped protect our astronauts, manage our electricity and save our greenhouse!', 17, '#e6eff5', { wordWrap: { width: 655 }, lineSpacing: 5 });
-    this.text(228, 248, 'MISSION SUCCESS', 13, '#82e6eb', { fontStyle: 'bold', letterSpacing: 2 });
-    this.text(228, 278, 'Congratulations, Commander! You have completed all three Mars missions and kept the base operational.', 18, '#fff5df', { wordWrap: { width: 810 }, lineSpacing: 6 });
-    this.text(228, 349, 'FINAL RESOURCE REPORT', 14, '#82e6eb', { fontStyle: 'bold', letterSpacing: 2 });
+    // ASTRO14 final congratulations
+    const finalMessage = this.text(370, 150, '', 18, '#fff5df', {wordWrap: { width: 700 }, lineSpacing: 6});
+    const voice = this.audio.playVoice('astro14');
+    this.typeText(finalMessage, 'Congratulations, Commander! You have completed all three Mars missions and kept the base operational.', voice?.duration);
+    this.text(228, 270, 'FINAL RESOURCE REPORT', 14, '#82e6eb', { fontStyle: 'bold', letterSpacing: 2 });
     const resourceRows = Object.entries(RESOURCE_INFO);
     resourceRows.forEach(([key, info], index) => {
-      const y = 384 + index * 55;
+      const y = 310 + index * 55;
       this.text(232, y, `${info.icon}  ${info.label}`, 17, '#e5eef5', { fontStyle: 'bold' });
       const bar = this.add.graphics();
       bar.fillStyle(0xffffff, 0.12).fillRoundedRect(431, y + 5, 376, 17, 8);
       bar.fillStyle(info.color, 1).fillRoundedRect(431, y + 5, 376 * values[key] / 100, 17, 8);
       this.text(839, y, `${values[key]}%`, 18, '#fff5df', { fontStyle: 'bold' });
     });
-    this.text(228, 557, 'Thank you for exploring Mars with ASTRO!', 18, '#cbdbe8');
-    this.text(228, 580, '“We make a great team, ASTRO!”', 15, '#9fd8e1', { fontStyle: 'italic' });
-    this.text(228, 603, 'Absolutely! Every resource matters. Great work, Commander!', 14, '#bad4e5');
+    this.text(228, 490, 'Thank you for exploring Mars with ASTRO!', 18, '#cbdbe8');
     this.button(818, 585, 144, 48, 'PLAY AGAIN', () => this.showPrologue(), { color: 0x287a81, fontSize: 14 });
     this.button(973, 585, 126, 48, 'MAIN MENU', () => this.showMenu(), { color: 0x293e68, stroke: 0x80a9dc, fontSize: 14 });
     this.time.delayedCall(1000, () => { if (this.phase === 'final') this.drawCelebration(true); });
