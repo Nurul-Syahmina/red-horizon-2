@@ -39,6 +39,22 @@ preload() {
     '/assets/audio/voice-over/junior-commander/COMMANDER.mp3'
   );
 
+    // Sound effects
+  this.load.audio(
+      'missionCompleted',
+      '/assets/audio/sound-effects/mission_completed.mp3'
+  );
+
+  this.load.audio(
+      'pushButton',
+      '/assets/audio/sound-effects/push_button_sound.mp3'
+  );
+
+  this.load.audio(
+      'resultOption',
+      '/assets/audio/sound-effects/result_option.mp3'
+  );
+
   // ASTRO idle animation spritesheet
 this.load.spritesheet(
     'astroIdle',
@@ -546,6 +562,8 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
 
   selectChoice(index) {
     if (this.phase !== 'choices' || this.selectedMission === this.missionIndex) return;
+    this.audio.playEffect('pushButton');
+
     this.selectedMission = this.missionIndex;
     const mission = MISSIONS[this.missionIndex]; const choice = mission.choices[index];
     const value = this.resources.deduct(choice.resource, 15);
@@ -615,6 +633,9 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
 
   showScience(mission) {
     this.phase = 'science';
+    // Play sound when Science Lesson appears
+    this.audio.playEffect('resultOption');
+
     // Remove the previous Decision Log screen
     this.consequenceObjects?.forEach(object => object.destroy());
     this.consequenceObjects = [];
@@ -679,6 +700,10 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     this.baseScreen();
     this.phase = 'final';
     this.drawCelebration();
+
+    // Play mission completed sound when confetti appears
+    this.audio.playEffect('missionCompleted');
+
     const values = this.resources.snapshot();
     this.panel(156, 64, 968, 592, 0.96);
     drawPortrait(this, 300, 165, 'ASTRO', 1.0).setDepth(1);
