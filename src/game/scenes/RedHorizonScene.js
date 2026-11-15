@@ -33,6 +33,12 @@ preload() {
     );
   }
 
+  // JUNIOR COMMANDER typing sound
+  this.load.audio(
+    'commanderTyping',
+    '/assets/audio/voice-over/junior-commander/COMMANDER.mp3'
+  );
+
   // ASTRO idle animation spritesheet
   this.load.spritesheet(
     'astroIdle',
@@ -106,6 +112,7 @@ this.scale.on('resize', () => {});
 
   clearStage() {
     this.audio?.stopVoice();
+    this.audio?.stopTyping();
     this.tweens.killAll();
     this.dialogueTimer?.remove(false);
     if (this.resourceDisplay) { this.resourceDisplay.destroy(); this.resourceDisplay = null; }
@@ -249,6 +256,10 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     if (this.storyIndex >= this.storyLines.length) return this.storyComplete();
     const line = this.storyLines[this.storyIndex];
     this.clearDialogueArea();
+    // Play typing sound only for JUNIOR COMMANDER
+    if (line.who === 'JUNIOR COMMANDER') {
+      this.audio.playTyping();
+    }
     this.dialogueObjects = [];
     const portrait = drawPortrait(this, 278, 330, line.who, 1.18); portrait.setDepth(12); this.dialogueObjects.push(portrait);
     const name = this.text(350, 260, line.who, 15, '#81e7ee', { fontStyle: 'bold', letterSpacing: 2 }).setDepth(13); this.dialogueObjects.push(name);
@@ -268,6 +279,7 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
   }
 
   clearDialogueArea() {
+    this.audio?.stopTyping();
     this.dialogueTimer?.remove(false); this.typingDone = true;
     this.dialogueObjects?.forEach(o => o.destroy()); this.dialogueObjects = [];
     // Portrait and text added in each line are tagged for clean removal.
@@ -298,9 +310,9 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
         this.typeTarget.setText(
           this.typeFull.slice(0, this.typeIndex)
         );
-
         if (this.typeIndex >= this.typeFull.length) {
           this.typingDone = true;
+          this.audio.stopTyping();
         }
       }
     });
@@ -310,6 +322,7 @@ drawPortrait(this, 1065, 507, 'CAPTAIN NOVA', 1.28);
     if (!this.typingDone && this.typeTarget?.active) {
       this.dialogueTimer?.remove(false); this.typeTarget.setText(this.typeFull); this.typingDone = true;
       this.audio.stopVoice();
+      this.audio.stopTyping();
     }
   }
 
